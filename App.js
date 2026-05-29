@@ -35,6 +35,14 @@ export default function App() {
   const loadHistory = async () => {
     const data = await getReadings();
     setHistory(data);
+
+    const lastTemp = data.find(item => item.topic === 'casa/temp');
+    const lastHum = data.find(item => item.topic === 'casa/umid');
+    const lastLuz = data.find(item => item.topic === 'casa/luz');
+
+    if (lastTemp) setTemp(parseFloat(lastTemp.value));
+    if (lastHum) setHum(parseFloat(lastHum.value));
+    if (lastLuz) setIsLightOn(lastLuz.value === '1');
   };
 
   const startConnection = () => {
