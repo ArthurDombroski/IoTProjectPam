@@ -8,9 +8,11 @@ Aplicativo mobile de automação residencial desenvolvido com **React Native + E
 
 - 🌡️ **Monitoramento em tempo real** de temperatura (°C) e umidade (%) via gauges circulares animados
 - 💡 **Controle de iluminação** remoto (ligar/desligar) via MQTT
-- 📊 **Histórico de leituras** salvo no banco de dados Supabase (últimas 20 entradas)
+- 📈 **Dashboard com Gráficos** de histórico de leitura usando `victory-native`
+- 📊 **Histórico em lista** salvo no banco de dados Supabase (últimas 20 entradas)
 - 🔌 **Reconexão automática** ao broker MQTT com modal de status de erro
 - 🌙 **Interface dark mode** com design moderno e responsivo
+- 📱 **Navegação** integrada com React Navigation
 
 ---
 
@@ -18,7 +20,7 @@ Aplicativo mobile de automação residencial desenvolvido com **React Native + E
 
 ```
 MyIoTProject/
-├── App.js                        # Componente raiz, orquestra estado e conexões
+├── App.js                        # Componente raiz, orquestra estado e conexões e navegação
 ├── index.js                      # Ponto de entrada do Expo
 ├── app.json                      # Configuração do Expo (ícone, splash, orientação)
 ├── babel.config.js               # Configuração do Babel (suporte a @env)
@@ -28,10 +30,13 @@ MyIoTProject/
 ├── assets/                       # Ícones e splash screen
 └── src/
     ├── components/
+    │   ├── Dashboard.js          # Gráficos de temperatura e umidade com Victory
     │   ├── Gauges.js             # Gauges circulares de temperatura e umidade
     │   ├── HistoryCard.js        # Card individual de leitura histórica
     │   ├── LightControl.js       # Botão de controle de luz
     │   └── StatusModal.js        # Modal de erro de conexão MQTT
+    ├── screens/
+    │   └── DashboardScreen.js    # Tela do dashboard contendo os gráficos
     └── services/
         ├── mqttService.js        # Encapsula conexão, subscribe e publish via Paho MQTT
         └── supabaseService.js    # Funções de leitura e escrita no Supabase
@@ -55,11 +60,13 @@ MyIoTProject/
 |-----------------------------------|----------|------------------------------------------|
 | React Native                      | 0.81.5   | Framework mobile                         |
 | Expo                              | ~54.0.0  | Toolchain e build                        |
-| react_native_mqtt (Paho)          | ^1.3.1   | Cliente MQTT sobre WebSocket             |
+| React Navigation                  | ^7.x     | Navegação entre telas (Stack)            |
+| react_native_mqtt (Paho) / mqtt   | ^1.3.1   | Cliente MQTT sobre WebSocket             |
 | @supabase/supabase-js             | ^2.106.2 | Banco de dados e persistência            |
 | react-native-circular-progress-indicator | ^4.4.2 | Gauges circulares animados           |
+| victory-native                    | ^36.9.2  | Gráficos dinâmicos de histórico          |
 | react-native-reanimated           | ~4.1.1   | Animações nativas de alta performance    |
-| react-native-svg                  | 15.12.1  | Renderização SVG (base dos gauges)       |
+| react-native-svg                  | 15.12.1  | Renderização SVG (base dos gauges e charts)|
 | react-native-vector-icons         | ^10.3.0  | Ícone de lâmpada (MaterialCommunityIcons)|
 | @react-native-async-storage       | 2.2.0    | Cache local para o cliente MQTT          |
 | react-native-dotenv               | ^3.4.11  | Variáveis de ambiente via `@env`         |
@@ -167,7 +174,13 @@ npm run web        # Abre no navegador
 
 ---
 
-## 🧩 Componentes
+## 🧩 Componentes e Telas
+
+### `HomeScreen` (Em `App.js`)
+Tela inicial contendo o controle de iluminação, os gauges e a lista de histórico.
+
+### `DashboardScreen` e `Dashboard`
+Nova tela (acessível através do botão "Ver Dashboard" na Home) contendo gráficos de linha (`victory-native`) mostrando a evolução temporal da temperatura e umidade baseada nos últimos registros do banco de dados.
 
 ### `Gauges`
 Exibe dois gauges circulares animados lado a lado para **temperatura** (vermelho) e **umidade** (azul), usando `react-native-circular-progress-indicator`.
