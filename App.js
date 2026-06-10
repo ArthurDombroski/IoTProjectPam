@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 import { MQTT_HOST, MQTT_PORT, MQTT_PATH, MQTT_USER, MQTT_PASS } from '@env';
 import MQTTService from './src/services/mqttService.js';
 import { saveReading, getReadings } from './src/services/supabaseService.js';
@@ -7,8 +9,44 @@ import StatusModal from './src/components/StatusModal.js';
 import LightControl from './src/components/LightControl.js';
 import Gauges from './src/components/Gauges.js';
 import HistoryCard from './src/components/HistoryCard.js';
+import DashboardScreen from './src/screens/DashboardScreen';
 
 const mqtt = new MQTTService();
+const Stack = createStackNavigator();
+
+function HomeScreen({ navigation, isLightOn, temp, hum, history, toggleLight, showError, startConnection, setShowError }) {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Smart Home IoT</Text>
+
+      <LightControl isLightOn={isLightOn} onToggle={toggleLight} />
+
+      <Gauges temp={temp} hum={hum} />
+
+      <TouchableOpacity style={styles.dashboardBtn} onPress={() => navigation.navigate('Dashboard', { history })}>
+        <Text style={styles.dashboardBtnText}>Ver Dashboard</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.historyTitle}>Histórico</Text>
+      <ScrollView style={styles.historyBox}>
+        {history.map((item) => (
+          <HistoryCard
+            key={item.id}
+            topic={item.topic}
+            value={item.value}
+            createdAt={item.created_at}
+          />
+        ))}
+      </ScrollView>
+
+      <StatusModal
+        visible={showError}
+        onRetry={startConnection}
+        onLater={() => setShowError(false)}
+      />
+    </View>
+  );
+}
 
 export default function App() {
   const [isConnected, setIsConnected] = useState(false);
@@ -77,31 +115,28 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Smart Home IoT</Text>
-
-      <LightControl isLightOn={isLightOn} onToggle={toggleLight} />
-
-      <Gauges temp={temp} hum={hum} />
-
-      <Text style={styles.historyTitle}>Histórico</Text>
-      <ScrollView style={styles.historyBox}>
-        {history.map((item) => (
-          <HistoryCard
-            key={item.id}
-            topic={item.topic}
-            value={item.value}
-            createdAt={item.created_at}
-          />
-        ))}
-      </ScrollView>
-
-      <StatusModal
-        visible={showError}
-        onRetry={startConnection}
-        onLater={() => setShowError(false)}
-      />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Home">
+          {(props) => (
+            <HomeScreen
+              {...props}
+              isLightOn={isLightOn}
+              temp={temp}
+              hum={hum}
+              history={history}
+              toggleLight={toggleLight}
+              showError={showError}
+              startConnection={startConnection}
+              setShowError={setShowError}
+            />
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="Dashboard">
+          {(props) => <DashboardScreen {...props} history={history} />}
+        </Stack.Screen>
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
@@ -114,6 +149,15 @@ const styles = StyleSheet.create({
     color: '#FFF', fontSize: 24,
     fontWeight: 'bold', marginTop: 40,
     marginBottom: 20
+  },
+  dashboardBtn: {
+    backgroundColor: '#27AE60', padding: 12,
+    borderRadius: 12, width: '100%',
+    alignItems: 'center', marginTop: 10,
+    marginBottom: 5
+  },
+  dashboardBtnText: {
+    color: '#FFF', fontWeight: 'bold', fontSize: 15
   },
   historyTitle: {
     color: '#FFF', fontSize: 18,
